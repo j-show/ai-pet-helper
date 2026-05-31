@@ -1,0 +1,42 @@
+{
+  "version": 1,
+  "hooks": {
+    "beforeSubmitPrompt": [
+      {
+        "type": "command",
+        "command": "node utils/on-user-prompt.mjs"
+      }
+    ],
+    "preToolUse": [
+      {
+        "type": "command",
+        "command": "node utils/on-state-switch.mjs"
+      }
+    ],
+    "subagentStart": [
+      {
+        "matcher": "code-reviewer|review",
+        "type": "command",
+        "command": "node utils/on-review.mjs"
+      }
+    ],
+    "postToolUseFailure": [
+      {
+        "type": "command",
+        "command": "node utils/on-failed.mjs"
+      }
+    ],
+    "stop": [
+      {
+        "type": "command",
+        "command": "node utils/on-base.mjs"
+      }
+    ],
+    "sessionEnd": [
+      {
+        "type": "command",
+        "command": "node utils/on-base.mjs"
+      }
+    ]
+  }
+}

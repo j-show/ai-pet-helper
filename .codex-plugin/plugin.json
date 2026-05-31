@@ -1,0 +1,29 @@
+{
+  "name": "ai-pet-helper",
+  "version": "1.0.0",
+  "description": "AI Pet lifecycle hooks for Claude Code and Codex",
+  "author": {
+    "name": "jShow",
+    "email": "dev@jshow.org"
+  },
+  "homepage": "https://github.com/j-show/ai-pet-helper",
+  "repository": "https://github.com/j-show/ai-pet-helper.git",
+  "license": "MIT",
+  "interface": {
+    "displayName": "AI Pet Helper",
+    "shortDescription": "AI Pet lifecycle hooks for Claude Code and Codex",
+    "longDescription": "AI Pet lifecycle hooks for Claude Code and Codex",
+    "developerName": "jShow",
+    "category": "Coding",
+    "capabilities": [
+      "Interactive"
+    ],
+    "websiteURL": "https://github.com/j-show/ai-pet-helper",
+    "privacyPolicyURL": "https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement",
+    "termsOfServiceURL": "https://docs.github.com/en/site-policy/github-terms/github-terms-of-service",
+    "brandColor": "#F59E0B",
+    "composerIcon": "./assets/small.svg",
+    "logo": "./assets/icon.png",
+    "screenshots": []
+  }
+}

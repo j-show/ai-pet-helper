@@ -1,0 +1,25 @@
+#!/usr/bin/env node
+/**
+ * Lifecycle hook: play running → waving → waiting sequence on user prompt.
+ * Triggered by UserPromptSubmit / beforeSubmitPrompt.
+ * @module utils/on-user-prompt
+ */
+import { openAipet, sleep } from '../libs/aipet.mjs';
+import { writeState } from '../libs/state.mjs';
+
+async function main() {
+  writeState({ phase: 'user_prompt' });
+
+  await openAipet('aipet://running?default=true');
+  await sleep(280);
+  await openAipet('aipet://waving?count=1');
+  await sleep(480);
+  await openAipet('aipet://waiting');
+
+  writeState({ phase: 'waiting' });
+}
+
+main().catch(error => {
+  console.error('[ai-pet-helper] on-user-prompt:', error);
+  process.exit(0);
+});

@@ -1,0 +1,42 @@
+{
+  "type": "module",
+  "name": "ai-pet-helper",
+  "displayName": "AI Pet Helper",
+  "shortDescription": "AI Pet lifecycle hooks for Claude Code and Codex",
+  "description": "AI Pet lifecycle hooks for Claude Code and Codex",
+  "version": "1.0.0",
+  "author": {
+    "name": "jShow",
+    "email": "dev@jshow.org"
+  },
+  "homepage": "https://github.com/j-show/ai-pet-helper",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/j-show/ai-pet-helper.git"
+  },
+  "license": "MIT",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "prepare": "husky",
+    "fix:all": "pnpm fix:prettier && pnpm fix:eslint",
+    "fix:prettier": "prettier --config ./.prettierrc --write .",
+    "fix:eslint": "eslint --config ./eslint.config.js --fix --quiet --no-warn-ignored .",
+    "build": "node scripts/build.mjs",
+    "install-plugin": "node scripts/install-plugin.mjs",
+    "test": "node --test test/**/*.test.mjs"
+  },
+  "devDependencies": {
+    "eslint": "^9",
+    "eslint-config-jshow": "^1.0.16",
+    "eslint-config-prettier": "latest",
+    "eslint-plugin-jshow": "^1.0.15",
+    "eslint-plugin-prettier": "latest",
+    "husky": "latest",
+    "lint-staged": "latest",
+    "prettier": ">=3",
+    "typescript": "^5",
+    "typescript-eslint": "^8"
+  }
+}
