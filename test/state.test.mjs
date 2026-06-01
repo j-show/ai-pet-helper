@@ -9,7 +9,9 @@ test('readState defaults to idle; writeState merges patches', async t => {
   t.after(() => rm(home, { recursive: true, force: true }));
 
   const previousHome = process.env.HOME;
+  const previousUserProfile = process.env.USERPROFILE;
   process.env.HOME = home;
+  process.env.USERPROFILE = home;
 
   try {
     const { readState, writeState } = await import('../libs/state.mjs');
@@ -26,6 +28,11 @@ test('readState defaults to idle; writeState merges patches', async t => {
       process.env.HOME = previousHome;
     } else {
       delete process.env.HOME;
+    }
+    if (typeof previousUserProfile === 'string') {
+      process.env.USERPROFILE = previousUserProfile;
+    } else {
+      delete process.env.USERPROFILE;
     }
   }
 });

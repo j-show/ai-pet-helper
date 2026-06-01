@@ -26,6 +26,12 @@
         "command": "node utils/on-failed.mjs"
       }
     ],
+    "afterAgentResponse": [
+      {
+        "type": "command",
+        "command": "node utils/on-agent-response.mjs"
+      }
+    ],
     "stop": [
       {
         "type": "command",

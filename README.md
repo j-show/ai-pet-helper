@@ -16,9 +16,9 @@
 | AI 开始工作 | 首次 `PreToolUse`（waiting 阶段）         | `aipet://jumping?count=1`                                                           |
 | 代码审查    | `SubagentStart`（code-reviewer / review） | `aipet://review`                                                                    |
 | 失败        | `StopFailure` / `PostToolUseFailure`      | `aipet://failed?count=3`                                                            |
-| 任务结束    | `Stop` / `SessionEnd` / `TaskCompleted`   | `aipet://base`                                                                      |
+| 任务结束    | `Stop` / `SessionEnd` / `TaskCompleted`   | `aipet://base`，随后 `aipet://text?tl={TITLE}&txt={TEXT}&sid={SESSION_ID}` |
 
-`text` 协议不在此插件范围内。
+`text` 协议由 `on-base.mjs` 在任务结束时触发：Claude/Codex 从 Stop 事件的 `last_assistant_message` 读取；Cursor 由 `afterAgentResponse` 缓存回复后，在 `stop` / `sessionEnd` 时消费。
 
 ### Cursor 事件对应（`hooks/hooks-cursor.json`）
 
@@ -28,6 +28,7 @@
 | `PreToolUse` | `preToolUse` | `utils/on-state-switch.mjs` |
 | `SubagentStart`（review） | `subagentStart` | `utils/on-review.mjs` |
 | `PostToolUseFailure` | `postToolUseFailure` | `utils/on-failed.mjs` |
+| — | `afterAgentResponse` | `utils/on-agent-response.mjs` |
 | `Stop` / `TaskCompleted` | `stop` | `utils/on-base.mjs` |
 | `SessionEnd` | `sessionEnd` | `utils/on-base.mjs` |
 
@@ -86,6 +87,7 @@ node utils/on-user-prompt.mjs
 node utils/on-state-switch.mjs
 node utils/on-review.mjs
 node utils/on-failed.mjs
+node utils/on-agent-response.mjs
 node utils/on-base.mjs
 ```
 
