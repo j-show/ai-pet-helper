@@ -5,11 +5,11 @@
  * @module utils/on-state-switch
  */
 import { openAipet } from '../libs/aipet.mjs';
+import { runHook } from '../libs/hook-runtime.mjs';
 import { readState, writeState } from '../libs/state.mjs';
 
-async function main() {
+runHook('on-state-switch', async ({ sessionId }) => {
   const state = readState();
-  // Skip if already in a terminal or in-progress phase (avoid duplicate jumping).
   if (
     state.phase === 'review' ||
     state.phase === 'failed' ||
@@ -17,16 +17,10 @@ async function main() {
   ) {
     return;
   }
-  // Only transition from post-prompt waiting states.
   if (state.phase !== 'waiting' && state.phase !== 'user_prompt') {
     return;
   }
 
-  await openAipet('aipet://jumping?count=1');
+  await openAipet('aipet://jumping?count=1', { sessionId });
   writeState({ phase: 'working' });
-}
-
-main().catch(error => {
-  console.error('[ai-pet-helper] on-state-switch:', error);
-  process.exit(0);
 });

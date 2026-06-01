@@ -5,14 +5,10 @@
  * @module utils/on-failed
  */
 import { openAipet } from '../libs/aipet.mjs';
+import { runHook } from '../libs/hook-runtime.mjs';
 import { writeState } from '../libs/state.mjs';
 
-async function main() {
-  await openAipet('aipet://failed?count=3');
+runHook('on-failed', async ({ sessionId }) => {
+  await openAipet('aipet://failed?count=3', { sessionId });
   writeState({ phase: 'failed' });
-}
-
-main().catch(error => {
-  console.error('[ai-pet-helper] on-failed:', error);
-  process.exit(0);
 });

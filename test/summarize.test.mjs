@@ -19,6 +19,7 @@ test('summarizeResponse prefers markdown heading as title', () => {
   assert.ok(summary);
   assert.equal(summary.title, '修复完成');
   assert.match(summary.text, /hooks/);
+  assert.notEqual(summary.text, summary.title);
 });
 
 test('summarizeResponse falls back to first sentence for title', () => {
@@ -29,10 +30,12 @@ test('summarizeResponse falls back to first sentence for title', () => {
 
 test('buildTextProtocolUrl encodes query parameters', () => {
   const url = buildTextProtocolUrl('标题 A', '内容 B & C', 'sess-123');
-  assert.equal(
-    url,
-    'aipet://text?tl=%E6%A0%87%E9%A2%98+A&txt=%E5%86%85%E5%AE%B9+B+%26+C&sid=sess-123'
-  );
+  const parsed = new URL(url);
+  assert.equal(parsed.protocol, 'aipet:');
+  assert.equal(parsed.host, 'text');
+  assert.equal(parsed.searchParams.get('tl'), '标题 A');
+  assert.equal(parsed.searchParams.get('txt'), '内容 B & C');
+  assert.equal(parsed.searchParams.get('sid'), 'sess-123');
 });
 
 test('buildTextProtocolUrl omits sid when session id is empty', () => {
@@ -41,4 +44,21 @@ test('buildTextProtocolUrl omits sid when session id is empty', () => {
     url,
     'aipet://text?tl=%E6%A0%87%E9%A2%98&txt=%E5%86%85%E5%AE%B9'
   );
+});
+
+test('buildTextProtocolUrl places txt before sid for Windows URL limits', () => {
+  const sid = 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee';
+  const url = buildTextProtocolUrl('标题 A', '内容 B', sid);
+  const txtIndex = url.indexOf('txt=');
+  const sidIndex = url.indexOf('sid=');
+  assert.ok(txtIndex >= 0);
+  assert.ok(sidIndex >= 0);
+  assert.ok(txtIndex < sidIndex);
+});
+
+test('buildTextProtocolUrl uses title as txt when body text is empty', () => {
+  const url = buildTextProtocolUrl('仅标题', '', 'sess-1');
+  const parsed = new URL(url);
+  assert.equal(parsed.searchParams.get('txt'), '仅标题');
+  assert.equal(parsed.searchParams.get('sid'), 'sess-1');
 });

@@ -5,14 +5,10 @@
  * @module utils/on-review
  */
 import { openAipet } from '../libs/aipet.mjs';
+import { runHook } from '../libs/hook-runtime.mjs';
 import { writeState } from '../libs/state.mjs';
 
-async function main() {
-  await openAipet('aipet://review');
+runHook('on-review', async ({ sessionId }) => {
+  await openAipet('aipet://review', { sessionId });
   writeState({ phase: 'review' });
-}
-
-main().catch(error => {
-  console.error('[ai-pet-helper] on-review:', error);
-  process.exit(0);
 });

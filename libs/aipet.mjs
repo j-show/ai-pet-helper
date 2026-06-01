@@ -4,6 +4,9 @@
  */
 import { spawnSync } from 'node:child_process';
 
+import { getActiveHook, getLogSessionId } from './hook-runtime.mjs';
+import { logProtocolActivation } from './protocol-log.mjs';
+
 const DEV_PROTOCOL_PATH = '/__aipet/protocol';
 const DEV_SERVER = 'http://127.0.0.1:1420';
 
@@ -11,26 +14,29 @@ const DEV_SERVER = 'http://127.0.0.1:1420';
  * @param {number} ms
  * @returns {Promise<void>}
  */
-export function sleep(ms) {
+export const sleep = ms => {
   return new Promise(resolve => {
     setTimeout(resolve, ms);
   });
-}
+};
 
-async function sendToDevServer(url) {
-  const endpoint = `${DEV_SERVER}${DEV_PROTOCOL_PATH}?url=${encodeURIComponent(url)}`;
-  const response = await fetch(endpoint, { method: 'POST' });
+const sendToDevServer = async url => {
+  const response = await fetch(`${DEV_SERVER}${DEV_PROTOCOL_PATH}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ url })
+  });
   if (!response.ok) {
     throw new Error(`dev bridge responded ${response.status}`);
   }
-}
+};
 
-function openWithSystem(url) {
+const openWithSystem = url => {
   const platform = process.platform;
   let result;
 
   if (platform === 'win32') {
-    result = spawnSync('cmd', ['/c', 'start', '', url], {
+    result = spawnSync('rundll32', ['url.dll,FileProtocolHandler', url], {
       encoding: 'utf8',
       shell: false
     });
@@ -40,26 +46,34 @@ function openWithSystem(url) {
     result = spawnSync('xdg-open', [url], { encoding: 'utf8' });
   }
 
-  if (result.error) {
-    throw result.error;
-  }
+  if (result.error) throw result.error;
+
   if (result.status !== 0) {
     const message =
       result.stderr?.trim() || result.stdout?.trim() || 'system open failed';
     throw new Error(message);
   }
-}
+};
 
 /**
  * Open one `aipet://` URL: POST to Vite dev bridge when available, else OS handler.
  * @param {string} url
+ * @param {{ sessionId?: string, hook?: string }} [options]
  * @returns {Promise<void>}
  * @throws {Error} When URL does not start with `aipet://`, or system open fails.
  */
-export async function openAipet(url) {
+export const openAipet = async (url, options = {}) => {
   if (!url?.startsWith('aipet://')) {
     throw new Error(`Invalid aipet URL: ${url}`);
   }
+
+  const sessionId = getLogSessionId(options.sessionId, url);
+
+  logProtocolActivation({
+    url,
+    sessionId,
+    hook: options.hook || getActiveHook()
+  });
 
   try {
     await sendToDevServer(url);
@@ -67,19 +81,4 @@ export async function openAipet(url) {
   } catch {
     openWithSystem(url);
   }
-}
-
-/**
- * Fire protocol URLs in order with optional delay between each.
- * @param {string[]} urls
- * @param {number} [gapMs]
- * @returns {Promise<void>}
- */
-export async function openAipetSequence(urls, gapMs = 0) {
-  for (let i = 0; i < urls.length; i += 1) {
-    if (i > 0 && gapMs > 0) {
-      await sleep(gapMs);
-    }
-    await openAipet(urls[i]);
-  }
-}
+};

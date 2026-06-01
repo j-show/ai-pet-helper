@@ -1,66 +1,34 @@
 #!/usr/bin/env node
 /**
- * Lifecycle hook: reset pet to idle base animation and show task summary text.
+ * Lifecycle hook: show task summary text and reset pet to idle base animation.
  * Triggered by Stop, SessionEnd, and TaskCompleted events.
  * @module utils/on-base
  */
 import { openAipet } from '../libs/aipet.mjs';
-import { readHookInput, resolveSessionId } from '../libs/hook-input.mjs';
-import { readState, writeState } from '../libs/state.mjs';
+import { runHook } from '../libs/hook-runtime.mjs';
+import { logHookDiagnostic } from '../libs/protocol-log.mjs';
+import { resolveResponseText } from '../libs/resolve-response.mjs';
+import { writeState } from '../libs/state.mjs';
 import { buildTextProtocolUrl, summarizeResponse } from '../libs/summarize.mjs';
 
-const getFormatInput = input => {
-  if (typeof input?.last_assistant_message === 'string') {
-    return input.last_assistant_message;
-  }
-
-  if (typeof input?.text === 'string') {
-    return input.text;
-  }
-
-  return '';
-};
-
-/**
- * @param {Record<string, unknown> | null} input
- * @param {Record<string, unknown>} state
- * @returns {string}
- */
-function resolveResponseText(input, state) {
-  const fromInput = getFormatInput(input);
-  if (fromInput.trim()) {
-    return fromInput.trim();
-  }
-
-  return typeof state.lastResponse === 'string'
-    ? state.lastResponse.trim()
-    : '';
-}
-
-async function main() {
-  const input = await readHookInput();
-  const state = readState();
+runHook('on-base', async ({ input, state, sessionId }) => {
   const responseText = resolveResponseText(input, state);
   const summary = responseText ? summarizeResponse(responseText) : null;
-  const sessionId = resolveSessionId(input, state);
-
-  await openAipet('aipet://base');
+  const logOptions = { sessionId };
 
   if (summary) {
     await openAipet(
-      buildTextProtocolUrl(summary.title, summary.text, sessionId)
+      buildTextProtocolUrl(summary.title, summary.text, sessionId),
+      logOptions
     );
+  } else {
+    logHookDiagnostic({
+      sessionId,
+      message: `no_assistant_text keys=${input ? Object.keys(input).join(',') : 'none'} cached=${Boolean(state.lastResponse)} transcript=${state.transcriptPath || 'none'}`
+    });
   }
 
-  const patch = { phase: 'idle' };
-  if (sessionId) {
-    patch.sessionId = sessionId;
-  }
-  writeState(patch);
-}
+  await openAipet('aipet://base', logOptions);
 
-main().catch(error => {
-  console.error('[ai-pet-helper] on-base:', error);
-  // Async hooks must not fail the host CLI with a non-zero exit.
-  process.exit(0);
+  writeState({ phase: 'idle' });
 });

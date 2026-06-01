@@ -6,7 +6,7 @@
 import { installPlugin } from '../libs/install-plugin.mjs';
 
 /** @returns {void} */
-function printUsage() {
+const printUsage = () => {
   console.error(`Usage: node scripts/install-plugin.mjs [options]
 
 在未上架官方市场时，将 ai-pet-helper 注册为本地插件并安装到 Claude Code / Codex。
@@ -16,8 +16,9 @@ Options:
   --codex           仅安装到 Codex
   --all             安装到两者（默认）
   --source <path>   ai-pet-helper 源码目录（默认：本包根目录）
-  --uninstall       卸载插件与市场配置
+  --uninstall       卸载（等同 pnpm remove-plugin）
   --dry-run         只打印将执行的步骤
+  --link-only       仅创建 ~/.ai-pet 目录联接，不调用 claude/codex CLI
   -h, --help        显示帮助
 
 示例:
@@ -26,18 +27,19 @@ Options:
   node scripts/install-plugin.mjs --source "$(pwd)" --dry-run
   node scripts/install-plugin.mjs --uninstall
 `);
-}
+};
 
 /**
  * @param {string[]} argv
- * @returns {{ target: 'claude' | 'codex' | 'all'; source?: string; uninstall: boolean; dryRun: boolean }}
+ * @returns {{ target: 'claude' | 'codex' | 'all'; source?: string; uninstall: boolean; dryRun: boolean; linkOnly: boolean }}
  */
-function parseArgs(argv) {
+const parseArgs = argv => {
   /** @type {'claude' | 'codex' | 'all'} */
   let target = 'all';
   let source;
   let uninstall = false;
   let dryRun = false;
+  let linkOnly = false;
 
   for (let i = 0; i < argv.length; i += 1) {
     const arg = argv[i];
@@ -65,6 +67,10 @@ function parseArgs(argv) {
       dryRun = true;
       continue;
     }
+    if (arg === '--link-only') {
+      linkOnly = true;
+      continue;
+    }
     if (arg === '--source') {
       source = argv[i + 1];
       if (!source) {
@@ -76,8 +82,8 @@ function parseArgs(argv) {
     throw new Error(`未知参数: ${arg}`);
   }
 
-  return { target, source, uninstall, dryRun };
-}
+  return { target, source, uninstall, dryRun, linkOnly };
+};
 
 try {
   const options = parseArgs(process.argv.slice(2));
