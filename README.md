@@ -18,16 +18,18 @@
 | 失败        | `StopFailure` / `PostToolUseFailure`      | `aipet://failed?count=3`                                                            |
 | 任务结束    | `Stop` / `SessionEnd` / `TaskCompleted`   | `aipet://base`，随后 `aipet://text?tl={TITLE}&txt={TEXT}&sid={SESSION_ID}` |
 
-`text` 协议由 `on-base.mjs` 在任务结束时触发：Claude/Codex 从 Stop 事件的 `last_assistant_message` 读取；Cursor 由 `afterAgentResponse` 缓存回复后，在 `stop` / `sessionEnd` 时消费。
+`text` 协议由 `on-base.mjs` 在任务结束时触发（先 `text` 后 `base`）。回复文本按 hook 字段 → 状态缓存 → transcript 文件解析；`sessionId` / `transcriptPath` 会写入 `~/.ai-pet/plugin-state.json`（stdin 为空时会按工作区扫描 `~/.cursor/projects/**/agent-transcripts` 与 `~/.claude/projects` 下最近的 `.jsonl`）。
 
 ### Cursor 事件对应（`hooks/hooks-cursor.json`）
 
 | Claude / Codex | Cursor | 脚本 |
 | --- | --- | --- |
 | `UserPromptSubmit` | `beforeSubmitPrompt` | `utils/on-user-prompt.mjs` |
+| `SessionStart` | — | `utils/on-session-start.mjs` |
 | `PreToolUse` | `preToolUse` | `utils/on-state-switch.mjs` |
 | `SubagentStart`（review） | `subagentStart` | `utils/on-review.mjs` |
 | `PostToolUseFailure` | `postToolUseFailure` | `utils/on-failed.mjs` |
+| `MessageDisplay` | — | `utils/on-agent-response.mjs` |
 | — | `afterAgentResponse` | `utils/on-agent-response.mjs` |
 | `Stop` / `TaskCompleted` | `stop` | `utils/on-base.mjs` |
 | `SessionEnd` | `sessionEnd` | `utils/on-base.mjs` |
@@ -45,9 +47,13 @@ node scripts/install-plugin.mjs --codex      # 仅 Codex
 pnpm install-plugin                          # 同上（package.json script）
 ```
 
+**Windows**：若出现 `EPERM` 无法创建符号链接，安装脚本会自动尝试目录联接（`junction` / `mklink /J`）。仍失败时可开启系统「开发人员模式」，或以管理员运行终端。
+
+`claude plugin install` 若因 `EPERM` 失败，多为 Claude 在缓存里复制了带 `node_modules` 的完整仓库。可重启 Claude 使用（若已 `enabled`），或开发时用 `claude --plugin-dir /path/to/ai-pet-helper` 临时加载。
+
 `install-plugin` 会：
 
-1. 将本包符号链接到 `~/.ai-pet/plugins/ai-pet-helper`
+1. 将本包链接到 `~/.ai-pet/plugins/ai-pet-helper`（Unix 为符号链接，Windows 为联接）
 2. 注册本地市场 `ai-pet-marketplace`（`~/.ai-pet/marketplace/ai-pet-marketplace` → 本包根目录，含 `.claude-plugin/marketplace.json`）
 3. 调用 `claude` / `codex` CLI 安装并启用 `ai-pet-helper@ai-pet-marketplace`
 
@@ -55,7 +61,9 @@ pnpm install-plugin                          # 同上（package.json script）
 
 ```bash
 node scripts/install-plugin.mjs --dry-run
-node scripts/install-plugin.mjs --uninstall
+node scripts/install-plugin.mjs --uninstall    # 卸载（install 的逆操作）
+node scripts/install-plugin.mjs --uninstall --claude
+pnpm remove-plugin                             # 同上（转发至 install-plugin --uninstall）
 ```
 
 构建（同步各 IDE 插件清单字段）：
@@ -100,7 +108,8 @@ node utils/on-base.mjs
 | `~/.ai-pet/plugin-state.json` | hook 阶段状态 |
 | `~/.ai-pet/plugins/ai-pet-helper/` | 推荐插件安装位置（符号链接） |
 | `~/.ai-pet/marketplace/ai-pet-marketplace/` | 本地 Claude/Codex 市场（符号链接） |
-| `~/.ai-pet/.env` | ai-pet 环境变量 |
+| `~/.ai-pet/.env` | ai-pet 环境变量（含 `AI_PET_DEBUG_PROTOCOL`） |
+| `~/.ai-pet/logs/<session-id>.log` | 协议调试日志（`AI_PET_DEBUG_PROTOCOL=true` 或 `1` 时；文件名为 Claude `session_id` 或 transcript 的 UUID 基名） |
 | `~/.ai-pet/pets/` | 用户宠物包 |
 
 ## 目录结构
@@ -115,11 +124,21 @@ ai-pet-helper/
 ├── hooks.json                 # Codex
 ├── libs/                      # 协议、状态、安装逻辑
 ├── utils/                     # 各生命周期 hook 入口
-├── scripts/                   # build、install-plugin
-└── test/
+├── scripts/                   # build、install-plugin、run-tests
+└── test/                      # 单元测试（`pnpm test` → run-tests.mjs）
 ```
 
 ## 协议说明
+
+### 调试日志
+
+在 `~/.ai-pet/.env` 中设置：
+
+```env
+AI_PET_DEBUG_PROTOCOL=true
+```
+
+取值为 `true` 或 `1`（大小写不敏感）时，每次触发 `aipet://` 协议会在 `~/.ai-pet/logs/<session-id>.log` 追加一行，字段为 ISO 时间、`hook` 名称、`protocol` URL。`on-base` 未取到助手文本时还会写入 `diagnostic` 行。
 
 - **`default=true`**：该动画临时取代 `aipet://base`，**始终循环播放**，直至手动 `aipet://base`
 - `running?default=true`：用户提问时使用的临时 base

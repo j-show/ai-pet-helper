@@ -1,12 +1,21 @@
 {
   "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/utils/on-session-start.mjs\""
+          }
+        ]
+      }
+    ],
     "UserPromptSubmit": [
       {
         "hooks": [
           {
             "type": "command",
-            "command": "node \"${CLAUDE_PLUGIN_ROOT}/utils/on-user-prompt.mjs\"",
-            "async": true
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/utils/on-user-prompt.mjs\""
           }
         ]
       }
@@ -16,8 +25,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node \"${CLAUDE_PLUGIN_ROOT}/utils/on-state-switch.mjs\"",
-            "async": true
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/utils/on-state-switch.mjs\""
           }
         ]
       }
@@ -28,8 +36,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node \"${CLAUDE_PLUGIN_ROOT}/utils/on-review.mjs\"",
-            "async": true
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/utils/on-review.mjs\""
           }
         ]
       }
@@ -39,8 +46,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node \"${CLAUDE_PLUGIN_ROOT}/utils/on-failed.mjs\"",
-            "async": true
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/utils/on-failed.mjs\""
           }
         ]
       }
@@ -50,8 +56,17 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node \"${CLAUDE_PLUGIN_ROOT}/utils/on-failed.mjs\"",
-            "async": true
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/utils/on-failed.mjs\""
+          }
+        ]
+      }
+    ],
+    "MessageDisplay": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/utils/on-agent-response.mjs\""
           }
         ]
       }
@@ -61,8 +76,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node \"${CLAUDE_PLUGIN_ROOT}/utils/on-base.mjs\"",
-            "async": true
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/utils/on-base.mjs\""
           }
         ]
       }
@@ -72,8 +86,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node \"${CLAUDE_PLUGIN_ROOT}/utils/on-base.mjs\"",
-            "async": true
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/utils/on-base.mjs\""
           }
         ]
       }
@@ -83,8 +96,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node \"${CLAUDE_PLUGIN_ROOT}/utils/on-base.mjs\"",
-            "async": true
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/utils/on-base.mjs\""
           }
         ]
       }
