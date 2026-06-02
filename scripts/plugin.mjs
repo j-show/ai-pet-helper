@@ -1,13 +1,13 @@
 #!/usr/bin/env node
 /**
  * CLI: symlink ai-pet-helper into `~/.ai-pet` and register with Claude Code / Codex.
- * @module scripts/install-plugin
+ * @module scripts/plugin
  */
 import { installPlugin } from '../libs/install-plugin.mjs';
 
 /** @returns {void} */
 const printUsage = () => {
-  console.error(`Usage: node scripts/install-plugin.mjs [options]
+  console.error(`Usage: node scripts/plugin.mjs [options]
 
 在未上架官方市场时，将 ai-pet-helper 注册为本地插件并安装到 Claude Code / Codex。
 
@@ -22,10 +22,10 @@ Options:
   -h, --help        显示帮助
 
 示例:
-  node scripts/install-plugin.mjs
-  node scripts/install-plugin.mjs --codex
-  node scripts/install-plugin.mjs --source "$(pwd)" --dry-run
-  node scripts/install-plugin.mjs --uninstall
+  node scripts/plugin.mjs
+  node scripts/plugin.mjs --codex
+  node scripts/plugin.mjs --source "$(pwd)" --dry-run
+  node scripts/plugin.mjs --uninstall
 `);
 };
 

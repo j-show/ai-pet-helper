@@ -2,12 +2,14 @@
  * @module libs/hook-runtime
  * Track active hook name and session id for protocol debug logs.
  */
-import { persistHookContext } from './hook-context.mjs';
 import {
   readHookInput,
   resolveLogSessionId,
-  resolveSessionId
+  resolveSessionId,
+  resolveProjectCwd,
+  resolveTranscriptPath
 } from './hook-input.mjs';
+import { readState, writeState } from './state.mjs';
 
 /** @type {string} */
 let activeHook = 'unknown';
@@ -39,6 +41,31 @@ export const getLogSessionId = (explicit = '', url = '') => {
   return fromRuntime || currentSessionId || '';
 };
 
+const persistHookContext = input => {
+  const previous = readState();
+  const projectCwd = resolveProjectCwd(input, previous);
+
+  const enriched = { ...previous, projectCwd };
+  const transcriptPath = resolveTranscriptPath(input, enriched);
+  const sessionId = resolveSessionId(input, {
+    ...enriched,
+    transcriptPath: transcriptPath || previous.transcriptPath
+  });
+
+  const patch = { projectCwd };
+  if (sessionId) {
+    patch.sessionId = sessionId;
+    if (sessionId !== previous.sessionId) {
+      patch.sessionTitle = '';
+    }
+  }
+  if (transcriptPath) {
+    patch.transcriptPath = transcriptPath;
+  }
+
+  return writeState(patch);
+};
+
 /**
  * Read stdin once, persist session/transcript, then run the hook body.
  * @param {string} hookName
@@ -49,7 +76,9 @@ export const runHook = async (hookName, fn) => {
   activeHook = hookName;
   try {
     const input = await readHookInput();
+
     currentState = persistHookContext(input);
+
     const fromState =
       typeof currentState.sessionId === 'string'
         ? currentState.sessionId.trim()
@@ -59,7 +88,8 @@ export const runHook = async (hookName, fn) => {
     await fn({
       input,
       state: currentState,
-      sessionId: currentSessionId
+      sessionId: currentSessionId,
+      sessionTitle: currentState?.sessionTitle?.trim() || ''
     });
   } catch (error) {
     console.error(`[ai-pet-helper] ${hookName}:`, error);

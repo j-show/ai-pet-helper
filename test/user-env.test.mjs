@@ -51,3 +51,41 @@ test('isProtocolDebugEnabled reads AI_PET_DEBUG_PROTOCOL from ~/.ai-pet/.env', a
     }
   }
 });
+
+test('summary max values read from ~/.ai-pet/.env', async t => {
+  const home = await mkdtemp(join(tmpdir(), 'aipet-env-summary-'));
+  t.after(() => rm(home, { recursive: true, force: true }));
+
+  const previousHome = process.env.HOME;
+  const previousUserProfile = process.env.USERPROFILE;
+  process.env.HOME = home;
+  process.env.USERPROFILE = home;
+
+  try {
+    await mkdir(join(home, '.ai-pet'), { recursive: true });
+    const envPath = join(home, '.ai-pet', '.env');
+    await writeFile(
+      envPath,
+      ['AI_PET_SUMMARY_MAX_TITLE=12', 'AI_PET_SUMMARY_MAX_TEXT=345'].join('\n'),
+      'utf8'
+    );
+
+    const { getSummaryMaxText, getSummaryMaxTitle, resetSummaryMaxCache } =
+      await import('../libs/user-env.mjs');
+
+    resetSummaryMaxCache();
+    assert.equal(getSummaryMaxTitle(), 12);
+    assert.equal(getSummaryMaxText(), 345);
+  } finally {
+    if (typeof previousHome === 'string') {
+      process.env.HOME = previousHome;
+    } else {
+      delete process.env.HOME;
+    }
+    if (typeof previousUserProfile === 'string') {
+      process.env.USERPROFILE = previousUserProfile;
+    } else {
+      delete process.env.USERPROFILE;
+    }
+  }
+});

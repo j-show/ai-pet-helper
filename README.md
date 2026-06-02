@@ -16,9 +16,9 @@
 | AI 开始工作 | 首次 `PreToolUse`（waiting 阶段）         | `aipet://jumping?count=1`                                                           |
 | 代码审查    | `SubagentStart`（code-reviewer / review） | `aipet://review`                                                                    |
 | 失败        | `StopFailure` / `PostToolUseFailure`      | `aipet://failed?count=3`                                                            |
-| 任务结束    | `Stop` / `SessionEnd` / `TaskCompleted`   | `aipet://base`，随后 `aipet://text?tl={TITLE}&txt={TEXT}&sid={SESSION_ID}` |
+| 任务结束    | `Stop` / `SessionEnd` / `TaskCompleted`   | `aipet://text?tl={SESSION_TITLE}&txt={SUMMARY}&sid={SESSION_ID}`（本次回复摘要，最多 50 字），随后 `aipet://base` |
 
-`text` 协议由 `on-base.mjs` 在任务结束时触发（先 `text` 后 `base`）。回复文本按 hook 字段 → 状态缓存 → transcript 文件解析；`sessionId` / `transcriptPath` 会写入 `~/.ai-pet/plugin-state.json`（stdin 为空时会按工作区扫描 `~/.cursor/projects/**/agent-transcripts` 与 `~/.claude/projects` 下最近的 `.jsonl`）。
+`text` 协议会在两类时机触发：输出过程中由 `on-agent-response.mjs` 按增量更新（Cursor `afterAgentResponse` / Claude `MessageDisplay`）；任务结束时由 `on-base.mjs` 发送最终摘要并恢复 `base`（先 `text` 后 `base`）。`tl` 取自用户首次提问（`on-user-prompt.mjs` 写入 `sessionTitle`），`sid` 为会话 `sessionId`，`txt` 为助手回复动态摘要（最多 50 字符，中文按 1 字计）。回复文本按 hook 字段 → 状态缓存 → transcript 解析；`sessionId` / `transcriptPath` / `sessionTitle` 持久化在 `~/.ai-pet/plugin-state.json`。
 
 ### Cursor 事件对应（`hooks/hooks-cursor.json`）
 

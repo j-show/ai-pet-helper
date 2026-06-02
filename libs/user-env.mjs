@@ -83,3 +83,66 @@ export const isProtocolDebugEnabled = () => {
 export const resetProtocolDebugCache = () => {
   protocolDebugCached = null;
 };
+
+/**
+ * @param {unknown} raw
+ * @param {{ fallback: number; min?: number; max?: number }} options
+ * @returns {number}
+ */
+const parseEnvInt = (raw, options) => {
+  const fallback = options.fallback;
+  const min = typeof options.min === 'number' ? options.min : 1;
+  const max =
+    typeof options.max === 'number' ? options.max : Number.POSITIVE_INFINITY;
+
+  if (raw == null) return fallback;
+
+  const value = Number.parseInt(String(raw).trim(), 10);
+  if (!Number.isFinite(value)) return fallback;
+  if (value < min) return fallback;
+  if (value > max) return fallback;
+  return value;
+};
+
+let summaryMaxTitleCached;
+let summaryMaxTextCached;
+
+/**
+ * Max length for session title (`tl`) used by `libs/summarize`.
+ * Reads `AI_PET_SUMMARY_MAX_TITLE` from `~/.ai-pet/.env`.
+ * @returns {number}
+ */
+export const getSummaryMaxTitle = () => {
+  if (summaryMaxTitleCached != null) return summaryMaxTitleCached;
+
+  const env = readUserEnv();
+  summaryMaxTitleCached = parseEnvInt(env.AI_PET_SUMMARY_MAX_TITLE, {
+    fallback: 50,
+    min: 1,
+    max: 100
+  });
+  return summaryMaxTitleCached;
+};
+
+/**
+ * Max length for response summary (`txt`) used by `libs/summarize`.
+ * Reads `AI_PET_SUMMARY_MAX_TEXT` from `~/.ai-pet/.env`.
+ * @returns {number}
+ */
+export const getSummaryMaxText = () => {
+  if (summaryMaxTextCached != null) return summaryMaxTextCached;
+
+  const env = readUserEnv();
+  summaryMaxTextCached = parseEnvInt(env.AI_PET_SUMMARY_MAX_TEXT, {
+    fallback: 200,
+    min: 1,
+    max: 400
+  });
+  return summaryMaxTextCached;
+};
+
+/** Reset cached summary max values (for tests). */
+export const resetSummaryMaxCache = () => {
+  summaryMaxTitleCached = null;
+  summaryMaxTextCached = null;
+};

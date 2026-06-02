@@ -13,7 +13,7 @@ import { isProtocolDebugEnabled } from './user-env.mjs';
  * @param {string} sessionId
  * @returns {string}
  */
-export const sanitizeLogSessionId = sessionId => {
+const sanitizeLogSessionId = sessionId => {
   const safe = sessionId
     .trim()
     .replace(/[^a-zA-Z0-9._-]+/g, '_')

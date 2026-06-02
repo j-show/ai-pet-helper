@@ -1,0 +1,4 @@
+*.{ts,js,mjs,cjs} text eol=lf
+*.{tsx,jsx,vue} text eol=lf
+*.{css,scss,less,sass} text eol=lf
+*.{md,json} text eol=lf

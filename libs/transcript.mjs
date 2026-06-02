@@ -12,9 +12,7 @@ import path from 'node:path';
  */
 export const expandHomePath = filePath => {
   let trimmed = filePath.trim();
-  if (!trimmed) {
-    return '';
-  }
+  if (!trimmed) return '';
 
   if (process.platform === 'win32') {
     const profile = process.env.USERPROFILE;
@@ -36,13 +34,9 @@ export const expandHomePath = filePath => {
  * @returns {string}
  */
 export const extractMessageContent = content => {
-  if (typeof content === 'string') {
-    return content.trim();
-  }
+  if (typeof content === 'string') return content.trim();
 
-  if (!Array.isArray(content)) {
-    return '';
-  }
+  if (!Array.isArray(content)) return '';
 
   return content
     .filter(block => block?.type === 'text' && typeof block.text === 'string')
@@ -76,9 +70,7 @@ export const extractAssistantTextFromEntry = entry => {
       : null;
 
   const fromMessage = message ? extractMessageContent(message.content) : '';
-  if (isMeaningfulAssistantText(fromMessage)) {
-    return fromMessage;
-  }
+  if (isMeaningfulAssistantText(fromMessage)) return fromMessage;
 
   if (entry.role === 'assistant' && typeof entry.text === 'string') {
     const text = entry.text.trim();
@@ -94,9 +86,7 @@ export const extractAssistantTextFromEntry = entry => {
  */
 export const readLastAssistantFromTranscript = transcriptPath => {
   const resolved = expandHomePath(transcriptPath ?? '');
-  if (!resolved || !fs.existsSync(resolved)) {
-    return '';
-  }
+  if (!resolved || !fs.existsSync(resolved)) return '';
 
   let lastText = '';
 
@@ -104,9 +94,7 @@ export const readLastAssistantFromTranscript = transcriptPath => {
     const lines = fs.readFileSync(resolved, 'utf8').split(/\r?\n/);
     for (const line of lines) {
       const trimmed = line.trim();
-      if (!trimmed) {
-        continue;
-      }
+      if (!trimmed) continue;
 
       try {
         const entry = JSON.parse(trimmed);
