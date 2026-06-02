@@ -6,9 +6,16 @@
  */
 import { openAipet } from '../libs/aipet.mjs';
 import { runHook } from '../libs/hook-runtime.mjs';
+import {
+  buildActionProtocolUrl,
+  ProtocolActionType
+} from '../libs/protocol.mjs';
 import { writeState } from '../libs/state.mjs';
 
 runHook('on-review', async ({ sessionId }) => {
-  await openAipet('aipet://review', { sessionId });
+  await openAipet(buildActionProtocolUrl(ProtocolActionType.REVIEW), {
+    sessionId
+  });
+
   writeState({ phase: 'review' });
 });

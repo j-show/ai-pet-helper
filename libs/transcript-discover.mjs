@@ -261,14 +261,10 @@ export const discoverRecentTranscript = (
   const cursor = discoverCursorTranscript(cwd, maxAgeMs);
 
   if (preferClaudeTranscripts()) {
-    if (claude) {
-      return claude;
-    }
-    return cursor;
+    return claude || cursor;
   }
 
-  if (cursor) {
-    return cursor;
-  }
+  if (cursor) return cursor;
+
   return claude;
 };

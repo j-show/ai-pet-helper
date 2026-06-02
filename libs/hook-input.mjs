@@ -11,14 +11,15 @@ const SESSION_UUID =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 /**
- * @param {unknown[]} candidates
+ * @param {unknown[]} list
  * @returns {string}
  */
-const pickFirstTrimmedString = candidates => {
-  for (const value of candidates) {
-    if (typeof value === 'string' && value.trim()) {
-      return value.trim();
-    }
+const pickFirstTrimmedString = list => {
+  for (const item of list) {
+    if (typeof item !== 'string') continue;
+
+    const trimmed = item.trim();
+    if (trimmed) return trimmed;
   }
 
   return '';
@@ -89,12 +90,38 @@ export const sessionIdFromTextProtocolUrl = url => {
   return '';
 };
 
+const getFormContent = input => {
+  const content = input?.content;
+  if (typeof content === 'string') return content;
+
+  if (
+    content &&
+    typeof content === 'object' &&
+    typeof content.text === 'string'
+  )
+    return content.text;
+
+  return '';
+};
+
 /**
- * Workspace directory for transcript discovery (Cursor/Claude hook cwd).
+ * User prompt text from UserPromptSubmit / beforeSubmitPrompt hook stdin.
  * @param {Record<string, unknown> | null | undefined} input
- * @param {Record<string, unknown>} [state]
  * @returns {string}
  */
+export const resolveUserPromptText = input => {
+  const fromContent = getFormContent(input);
+
+  return pickFirstTrimmedString([
+    input?.prompt,
+    input?.user_message,
+    input?.userMessage,
+    input?.message,
+    input?.text,
+    fromContent
+  ]);
+};
+
 export const resolveProjectCwd = (input, state = {}) => {
   const roots = input?.workspace_roots;
   const fromRoots =
@@ -121,17 +148,13 @@ export const resolveProjectCwd = (input, state = {}) => {
  * @returns {boolean}
  */
 const isStaleCursorTranscriptForClaude = transcriptPath => {
-  if (!transcriptPath?.trim()) {
-    return false;
-  }
+  if (!transcriptPath?.trim()) return false;
 
   const inClaudeHost = Boolean(
     process.env.CLAUDE_PLUGIN_ROOT?.trim() ||
     process.env.CLAUDE_CODE_ENTRYPOINT?.trim()
   );
-  if (!inClaudeHost) {
-    return false;
-  }
+  if (!inClaudeHost) return false;
 
   return transcriptPath.replace(/\\/g, '/').includes('/.cursor/');
 };
@@ -143,21 +166,18 @@ const isStaleCursorTranscriptForClaude = transcriptPath => {
  */
 export const resolveTranscriptPath = (input, state = {}) => {
   const projectCwd = resolveProjectCwd(input, state);
-  const stateTranscript =
-    typeof state.transcriptPath === 'string' &&
-    !isStaleCursorTranscriptForClaude(state.transcriptPath)
-      ? state.transcriptPath
-      : '';
+  const transcriptPath = String(state.transcriptPath || '').trim();
+  const stateTranscript = !isStaleCursorTranscriptForClaude(transcriptPath)
+    ? transcriptPath
+    : '';
 
   const withoutDiscover = pickFirstTrimmedString([
-    typeof input?.transcript_path === 'string' ? input.transcript_path : '',
+    String(input?.transcript_path || '').trim(),
     stateTranscript,
     process.env.CLAUDE_TRANSCRIPT_PATH,
     process.env.CURSOR_TRANSCRIPT_PATH
   ]);
-  if (withoutDiscover) {
-    return withoutDiscover;
-  }
+  if (withoutDiscover) return withoutDiscover;
 
   return discoverRecentTranscript(projectCwd).trim();
 };
@@ -173,16 +193,10 @@ export const resolveSessionId = (input, state = {}) => {
     input?.conversation_id,
     input?.sessionId,
     state.sessionId,
-    sessionIdFromTranscriptPath(
-      typeof input?.transcript_path === 'string' ? input.transcript_path : ''
-    ),
-    sessionIdFromTranscriptPath(
-      typeof state.transcriptPath === 'string' ? state.transcriptPath : ''
-    )
+    sessionIdFromTranscriptPath(String(input?.transcript_path || '').trim()),
+    sessionIdFromTranscriptPath(String(state.transcriptPath || '').trim())
   ]);
-  if (fromKnown) {
-    return fromKnown;
-  }
+  if (fromKnown) return fromKnown;
 
   return sessionIdFromTranscriptPath(resolveTranscriptPath(input, state));
 };
@@ -197,6 +211,7 @@ export const resolveSessionId = (input, state = {}) => {
  */
 export const resolveLogSessionId = (options = {}) => {
   const { explicit, url, state = {} } = options;
+
   return pickFirstTrimmedString([
     explicit,
     sessionIdFromTextProtocolUrl(url),

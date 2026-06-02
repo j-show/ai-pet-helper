@@ -6,10 +6,15 @@
  */
 import { openAipet } from '../libs/aipet.mjs';
 import { runHook } from '../libs/hook-runtime.mjs';
+import {
+  buildActionProtocolUrl,
+  ProtocolActionType
+} from '../libs/protocol.mjs';
 import { readState, writeState } from '../libs/state.mjs';
 
 runHook('on-state-switch', async ({ sessionId }) => {
   const state = readState();
+
   if (
     state.phase === 'review' ||
     state.phase === 'failed' ||
@@ -17,10 +22,17 @@ runHook('on-state-switch', async ({ sessionId }) => {
   ) {
     return;
   }
+
   if (state.phase !== 'waiting' && state.phase !== 'user_prompt') {
     return;
   }
 
-  await openAipet('aipet://jumping?count=1', { sessionId });
+  await openAipet(
+    buildActionProtocolUrl(ProtocolActionType.JUMPING, {
+      count: 1
+    }),
+    { sessionId }
+  );
+
   writeState({ phase: 'working' });
 });

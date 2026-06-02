@@ -22,20 +22,15 @@ const DIRECT_TEXT_KEYS = [
  * @returns {string}
  */
 export const extractHookText = input => {
-  if (!input) {
-    return '';
-  }
+  if (!input) return '';
 
   for (const key of DIRECT_TEXT_KEYS) {
-    const value = input[key];
-    if (typeof value === 'string' && value.trim()) {
-      return value.trim();
-    }
+    const value = String(input[key] || '').trim();
+    if (value) return value;
   }
 
-  if (typeof input.delta === 'string' && input.delta.trim()) {
-    return input.delta.trim();
-  }
+  const delta = String(input.delta || '').trim();
+  if (delta) return delta;
 
   return '';
 };
@@ -47,13 +42,10 @@ export const extractHookText = input => {
  */
 export const resolveResponseText = (input, state = {}) => {
   const fromHook = extractHookText(input);
-  if (fromHook) {
-    return fromHook;
-  }
+  if (fromHook) return fromHook;
 
-  if (typeof state.lastResponse === 'string' && state.lastResponse.trim()) {
-    return state.lastResponse.trim();
-  }
+  const lastResponse = String(state.lastResponse || '').trim();
+  if (lastResponse) return lastResponse;
 
   const transcriptPath = resolveTranscriptPath(input, state);
   if (transcriptPath) {

@@ -24,9 +24,8 @@
     "fix:prettier": "prettier --config ./.prettierrc --write .",
     "fix:eslint": "eslint --config ./eslint.config.js --fix --quiet --no-warn-ignored .",
     "build": "node scripts/build.mjs",
-    "install-plugin": "node scripts/install-plugin.mjs",
-    "remove-plugin": "node scripts/install-plugin.mjs --uninstall",
-    "test": "node scripts/run-tests.mjs"
+    "plugin:install": "node scripts/plugin.mjs",
+    "plugin:remove": "node scripts/plugin.mjs --uninstall"
   },
   "devDependencies": {
     "eslint": "^9",

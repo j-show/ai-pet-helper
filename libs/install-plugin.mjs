@@ -52,9 +52,8 @@ const pathExists = async filePath => {
 const readSymlinkTarget = async linkPath => {
   try {
     const stat = await lstat(linkPath);
-    if (!stat.isSymbolicLink()) {
-      return null;
-    }
+    if (!stat.isSymbolicLink()) return null;
+
     return await readlink(linkPath);
   } catch {
     return null;
