@@ -3,7 +3,6 @@
  * Session title (`tl`) and per-response summary (`txt`) for `aipet://text`.
  */
 
-import { writeTextPayload } from './text-payload.mjs';
 import { getSummaryMaxText, getSummaryMaxTitle } from './user-env.mjs';
 
 /** Max length for session title (`tl`), fixed for the session. */
@@ -104,46 +103,4 @@ export const summarizeResponse = text => {
 
   const title = summarizeSessionTitle(text) || txt;
   return { title, text: txt };
-};
-
-/**
- * Build `aipet://text` with fixed `tl` (session title) and `sid` (session id);
- * `txt` is the per-output summary only (max {@link SUMMARY_MAX_TEXT} chars).
- *
- * @param {string} sessionTitle
- * @param {string} txt
- * @param {string} sessionId
- * @returns {string}
- */
-export const buildTextProtocolUrl = (sessionTitle, txt, sessionId = '') => {
-  const sid = String(sessionId || '').trim();
-  const tl = String(sessionTitle || '').trim();
-  const summary = truncateChars(String(txt || '').trim(), SUMMARY_MAX_TEXT);
-
-  const params = new URLSearchParams();
-  params.set('tl', tl);
-  if (summary) {
-    params.set('txt', summary);
-  }
-  if (sid) {
-    params.set('sid', sid);
-    writeTextPayload(sid, { title: tl, text: summary });
-  }
-
-  // Keep `txt` before `sid` to reduce risk of tail truncation on Windows handlers.
-  const raw = params.toString();
-  const txtIndex = raw.indexOf('txt=');
-  const sidIndex = raw.indexOf('sid=');
-  if (txtIndex >= 0 && sidIndex >= 0 && txtIndex > sidIndex) {
-    const parsed = new URLSearchParams(raw);
-    const reordered = new URLSearchParams();
-    reordered.set('tl', parsed.get('tl') || '');
-    const t = parsed.get('txt');
-    if (t) reordered.set('txt', t);
-    const s = parsed.get('sid');
-    if (s) reordered.set('sid', s);
-    return `aipet://text?${reordered.toString()}`;
-  }
-
-  return `aipet://text?${raw}`;
 };

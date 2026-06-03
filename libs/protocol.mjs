@@ -11,6 +11,7 @@ export const ProtocolActionType = {
 };
 
 export const buildTextProtocolUrl = (options = {}) => {
+  const stp = (options.stp || '').trim();
   const sid = (options.sid || '').trim();
   const tl = (options.title || '').trim();
   const icon = (options.icon || '').trim();
@@ -18,6 +19,7 @@ export const buildTextProtocolUrl = (options = {}) => {
 
   const params = new URLSearchParams();
 
+  if (stp) params.set('stp', stp);
   if (sid) params.set('sid', sid);
   if (tl) params.set('tl', tl);
   if (icon) params.set('icon', icon);

@@ -21,7 +21,7 @@ import { summarizeResponseText } from '../libs/summarize.mjs';
 
 runHook(
   'on-agent-response',
-  async ({ input, state, sessionId, sessionTitle }) => {
+  async ({ input, state, sessionType, sessionId, sessionTitle }) => {
     if (!input) return;
 
     const event =
@@ -71,6 +71,7 @@ runHook(
 
     await openAipet(
       buildTextProtocolUrl({
+        stp: sessionType,
         sid: sessionId,
         icon: 'loading',
         title: sessionTitle,

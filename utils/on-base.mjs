@@ -19,36 +19,40 @@ import {
   summarizeSessionTitle
 } from '../libs/summarize.mjs';
 
-runHook('on-base', async ({ input, state, sessionId, sessionTitle }) => {
-  const responseText = resolveResponseText(input, state);
+runHook(
+  'on-base',
+  async ({ input, state, sessionType, sessionId, sessionTitle }) => {
+    const responseText = resolveResponseText(input, state);
 
-  const text = summarizeResponseText(responseText);
-  const title = sessionTitle || summarizeSessionTitle(responseText);
+    const text = summarizeResponseText(responseText);
+    const title = sessionTitle || summarizeSessionTitle(responseText);
 
-  if (!text) {
-    logHookDiagnostic({
-      sessionId,
-      message: [
-        `no_assistant_text keys=${input ? Object.keys(input).join(',') : 'none'}`,
-        `cached=${Boolean(state.lastResponse)}`,
-        `transcript=${state.transcriptPath || 'none'}`
-      ].join(' ')
+    if (!text) {
+      logHookDiagnostic({
+        sessionId,
+        message: [
+          `no_assistant_text keys=${input ? Object.keys(input).join(',') : 'none'}`,
+          `cached=${Boolean(state.lastResponse)}`,
+          `transcript=${state.transcriptPath || 'none'}`
+        ].join(' ')
+      });
+    }
+
+    await openAipet(
+      buildTextProtocolUrl({
+        stp: sessionType,
+        sid: sessionId,
+        title,
+        text
+      }),
+      { sessionId }
+    );
+    await sleep(1000);
+
+    await openAipet(buildActionProtocolUrl(ProtocolActionType.BASE), {
+      sessionId
     });
+
+    writeState({ phase: 'idle' });
   }
-
-  await openAipet(
-    buildTextProtocolUrl({
-      sid: sessionId,
-      title,
-      text
-    }),
-    { sessionId }
-  );
-  await sleep(1000);
-
-  await openAipet(buildActionProtocolUrl(ProtocolActionType.BASE), {
-    sessionId
-  });
-
-  writeState({ phase: 'idle' });
-});
+);

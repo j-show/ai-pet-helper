@@ -10,6 +10,8 @@ import { discoverRecentTranscript } from './transcript-discover.mjs';
 const SESSION_UUID =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
+const SESSION_TYPES = ['claude', 'codex', 'cursor', 'qcode'];
+
 /**
  * @param {unknown[]} list
  * @returns {string}
@@ -199,6 +201,22 @@ export const resolveSessionId = (input, state = {}) => {
   if (fromKnown) return fromKnown;
 
   return sessionIdFromTranscriptPath(resolveTranscriptPath(input, state));
+};
+
+export const resolveSessionType = (input, state = {}) => {
+  const fromKnown = pickFirstTrimmedString([
+    input?.provider,
+    input?.runtime,
+    input?.sessionType,
+    state.provider,
+    state.runtime,
+    state.sessionType
+  ])
+    .trim()
+    .toLowerCase();
+  if (!fromKnown || !SESSION_TYPES.includes(fromKnown)) return '';
+
+  return fromKnown;
 };
 
 /**

@@ -2,7 +2,6 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 
 import {
-  buildTextProtocolUrl,
   SUMMARY_MAX_TITLE,
   stripMarkdown,
   summarizeResponse,
@@ -59,41 +58,6 @@ test('summarizeResponse combines session title and response summary', () => {
   assert.ok(summary);
   assert.equal(summary.title, '任务已完成');
   assert.match(summary.text, /详细说明/);
-});
-
-test('buildTextProtocolUrl encodes query parameters', () => {
-  const url = buildTextProtocolUrl('会话标题', '内容 B & C', 'sess-123');
-  const parsed = new URL(url);
-  assert.equal(parsed.protocol, 'aipet:');
-  assert.equal(parsed.host, 'text');
-  assert.equal(parsed.searchParams.get('tl'), '会话标题');
-  assert.equal(parsed.searchParams.get('txt'), '内容 B & C');
-  assert.equal(parsed.searchParams.get('sid'), 'sess-123');
-});
-
-test('buildTextProtocolUrl omits sid when session id is empty', () => {
-  const url = buildTextProtocolUrl('标题', '内容', '');
-  const parsed = new URL(url);
-  assert.equal(parsed.searchParams.get('sid'), null);
-});
-
-test('buildTextProtocolUrl places txt before sid for Windows URL limits', () => {
-  const sid = 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee';
-  const url = buildTextProtocolUrl('标题 A', '内容 B', sid);
-  const txtIndex = url.indexOf('txt=');
-  const sidIndex = url.indexOf('sid=');
-  assert.ok(txtIndex >= 0);
-  assert.ok(sidIndex >= 0);
-  assert.ok(txtIndex < sidIndex);
-});
-
-test('buildTextProtocolUrl truncates txt to SUMMARY_MAX_TEXT', () => {
-  const longTxt = '字'.repeat(SUMMARY_MAX_TEXT + 5);
-  const url = buildTextProtocolUrl('标题', longTxt, 'sess-1');
-  const parsed = new URL(url);
-  const txt = parsed.searchParams.get('txt');
-  assert.ok(txt);
-  assert.equal(txt.length, SUMMARY_MAX_TEXT);
 });
 
 test('truncateChars respects SUMMARY_MAX_TITLE', () => {

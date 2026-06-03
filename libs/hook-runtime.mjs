@@ -7,7 +7,8 @@ import {
   resolveLogSessionId,
   resolveSessionId,
   resolveProjectCwd,
-  resolveTranscriptPath
+  resolveTranscriptPath,
+  resolveSessionType
 } from './hook-input.mjs';
 import { readState, writeState } from './state.mjs';
 
@@ -50,15 +51,18 @@ const persistHookContext = input => {
   const sessionId = resolveSessionId(input, {
     ...enriched,
     transcriptPath: transcriptPath || previous.transcriptPath
-  });
+  }).trim();
+  const sessionType = resolveSessionType(input, enriched);
 
-  const patch = { projectCwd };
+  const patch = { projectCwd, sessionType };
+
   if (sessionId) {
     patch.sessionId = sessionId;
     if (sessionId !== previous.sessionId) {
       patch.sessionTitle = '';
     }
   }
+
   if (transcriptPath) {
     patch.transcriptPath = transcriptPath;
   }
@@ -88,6 +92,7 @@ export const runHook = async (hookName, fn) => {
     await fn({
       input,
       state: currentState,
+      sessionType: currentState.sessionType || '',
       sessionId: currentSessionId,
       sessionTitle: currentState?.sessionTitle?.trim() || ''
     });
