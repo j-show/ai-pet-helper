@@ -10,8 +10,20 @@ export const ProtocolActionType = {
   REVIEW: 'review'
 };
 
+/**
+ * Build `aipet://text` with optional `sty`, `sid`, `tl`, `icon`, `txt`.
+ * Omits `icon` and `tl` when `txt` is empty. Accepts legacy `stp` as `sty`.
+ * @param {object} [options]
+ * @param {string} [options.sty]
+ * @param {string} [options.stp]
+ * @param {string} [options.sid]
+ * @param {string} [options.title]
+ * @param {string} [options.icon]
+ * @param {string} [options.text]
+ * @returns {string}
+ */
 export const buildTextProtocolUrl = (options = {}) => {
-  const stp = (options.stp || '').trim();
+  const sty = (options.sty || options.stp || '').trim();
   const sid = (options.sid || '').trim();
   const tl = (options.title || '').trim();
   const icon = (options.icon || '').trim();
@@ -19,7 +31,7 @@ export const buildTextProtocolUrl = (options = {}) => {
 
   const params = new URLSearchParams();
 
-  if (stp) params.set('stp', stp);
+  if (sty) params.set('sty', sty);
   if (sid) params.set('sid', sid);
   if (tl) params.set('tl', tl);
   if (icon) params.set('icon', icon);

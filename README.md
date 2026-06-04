@@ -15,10 +15,10 @@
 | 等待响应    | 同上（waving 后自动）                     | `aipet://waiting`                                                                   |
 | AI 开始工作 | 首次 `PreToolUse`（waiting 阶段）         | `aipet://jumping?count=1`                                                           |
 | 代码审查    | `SubagentStart`（code-reviewer / review） | `aipet://review`                                                                    |
-| 失败        | `StopFailure` / `PostToolUseFailure`      | `aipet://failed?count=3`                                                            |
+| 失败        | `StopFailure` / `PostToolUseFailure`      | 先 `aipet://text?icon=error&txt=…`（有失败文案时），再 `aipet://failed?count=3`        |
 | 任务结束    | `Stop` / `SessionEnd` / `TaskCompleted`   | `aipet://text?tl={SESSION_TITLE}&txt={SUMMARY}&sid={SESSION_ID}`（本次回复摘要，最多 50 字），随后 `aipet://base` |
 
-`text` 协议会在两类时机触发：输出过程中由 `on-agent-response.mjs` 按增量更新（Cursor `afterAgentResponse` / Claude `MessageDisplay`）；任务结束时由 `on-base.mjs` 发送最终摘要并恢复 `base`（先 `text` 后 `base`）。`tl` 取自用户首次提问（`on-user-prompt.mjs` 写入 `sessionTitle`），`sid` 为会话 `sessionId`，`txt` 为助手回复动态摘要（最多 50 字符，中文按 1 字计）。回复文本按 hook 字段 → 状态缓存 → transcript 解析；`sessionId` / `transcriptPath` / `sessionTitle` 持久化在 `~/.ai-pet/plugin-state.json`。
+`text` 协议会在三类时机触发：输出过程中由 `on-agent-response.mjs` 按增量更新（Cursor `afterAgentResponse` / Claude `MessageDisplay`）；工具/API 失败时由 `on-tools-failed.mjs` / `on-failed.mjs` 推送错误摘要（先 `text` 再 `failed`）；任务结束时由 `on-base.mjs` 发送最终摘要并恢复 `base`（先 `text` 后 `base`）。`tl` 取自用户首次提问（`on-user-prompt.mjs` 写入 `sessionTitle`），`sty` 为会话类型（`claude` / `codex` / `cursor` / `qcode`），`sid` 为会话 `sessionId`，`txt` 为摘要（最多 50 字符，中文按 1 字计）。失败摘要由 `libs/resolve-failure.mjs` 从 hook stdin 的 `error_message` / `error` / `message` 等字段拼接。回复文本按 hook 字段 → 状态缓存 → transcript 解析；`sessionId` / `transcriptPath` / `sessionTitle` 持久化在 `~/.ai-pet/plugin-state.json`。
 
 ### Cursor 事件对应（`hooks/hooks-cursor.json`）
 
@@ -28,13 +28,14 @@
 | `SessionStart` | — | `utils/on-session-start.mjs` |
 | `PreToolUse` | `preToolUse` | `utils/on-state-switch.mjs` |
 | `SubagentStart`（review） | `subagentStart` | `utils/on-review.mjs` |
-| `PostToolUseFailure` | `postToolUseFailure` | `utils/on-failed.mjs` |
+| `PostToolUseFailure` | `postToolUseFailure` | `utils/on-tools-failed.mjs` |
+| `StopFailure` | — | `utils/on-failed.mjs` |
 | `MessageDisplay` | — | `utils/on-agent-response.mjs` |
 | — | `afterAgentResponse` | `utils/on-agent-response.mjs` |
 | `Stop` / `TaskCompleted` | `stop` | `utils/on-base.mjs` |
 | `SessionEnd` | `sessionEnd` | `utils/on-base.mjs` |
 
-Cursor 无 `StopFailure` 独立事件；工具失败由 `postToolUseFailure` 触发 `on-failed.mjs`。命令路径相对插件根目录。
+Cursor 无 `StopFailure` 独立事件；工具失败由 `postToolUseFailure` 触发 `on-tools-failed.mjs`（失败时先发 `aipet://text` 再播 `failed`）。命令路径相对插件根目录。
 
 ## 安装（未上架市场，需手动安装）
 
@@ -94,6 +95,7 @@ claude --plugin-dir ~/.ai-pet/plugins/ai-pet-helper
 node utils/on-user-prompt.mjs
 node utils/on-state-switch.mjs
 node utils/on-review.mjs
+node utils/on-tools-failed.mjs
 node utils/on-failed.mjs
 node utils/on-agent-response.mjs
 node utils/on-base.mjs

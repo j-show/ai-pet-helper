@@ -40,8 +40,9 @@ runHook(
 
     await openAipet(
       buildTextProtocolUrl({
-        stp: sessionType,
+        sty: sessionType,
         sid: sessionId,
+        icon: 'success',
         title,
         text
       }),

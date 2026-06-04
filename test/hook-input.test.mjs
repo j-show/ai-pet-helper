@@ -11,7 +11,10 @@ import {
 test('resolveUserPromptText reads prompt and message aliases', () => {
   assert.equal(resolveUserPromptText({ prompt: '  hello  ' }), 'hello');
   assert.equal(resolveUserPromptText({ user_message: 'hi' }), 'hi');
-  assert.equal(resolveUserPromptText({ content: { text: 'nested' } }), 'nested');
+  assert.equal(
+    resolveUserPromptText({ content: { text: 'nested' } }),
+    'nested'
+  );
 });
 
 test('resolveSessionId prefers session_id then conversation_id', () => {

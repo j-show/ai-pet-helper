@@ -23,7 +23,7 @@
     "postToolUseFailure": [
       {
         "type": "command",
-        "command": "node utils/on-failed.mjs"
+        "command": "node utils/on-tools-failed.mjs"
       }
     ],
     "afterAgentResponse": [

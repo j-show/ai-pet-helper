@@ -1,10 +1,10 @@
 #!/usr/bin/env node
 /**
- * Lifecycle hook: turn-level API failure animation and error text.
- * Triggered by StopFailure (Claude Code).
- * @module utils/on-failed
+ * Lifecycle hook: tool failure animation and error text.
+ * Triggered by PostToolUseFailure / postToolUseFailure.
+ * @module utils/on-tools-failed
  */
-import { openAipet } from '../libs/aipet.mjs';
+import { openAipet, sleep } from '../libs/aipet.mjs';
 import { runHook } from '../libs/hook-runtime.mjs';
 import {
   buildTextProtocolUrl,
@@ -12,29 +12,34 @@ import {
   ProtocolActionType
 } from '../libs/protocol.mjs';
 import {
-  extractStopFailureText,
+  extractToolFailureText,
   summarizeFailureForText
 } from '../libs/resolve-failure.mjs';
 import { writeState } from '../libs/state.mjs';
 import { summarizeSessionTitle } from '../libs/summarize.mjs';
 
 runHook(
-  'on-failed',
+  'on-tools-failed',
   async ({ input, sessionType, sessionId, sessionTitle }) => {
-    await openAipet(buildActionProtocolUrl(ProtocolActionType.FAILED), {
-      sessionId
-    });
+    await openAipet(
+      buildActionProtocolUrl(ProtocolActionType.FAILED, {
+        count: 3
+      }),
+      { sessionId }
+    );
 
-    writeState({ phase: 'failed' });
+    writeState({ phase: 'tools_failed' });
 
     const failure = summarizeFailureForText({
       input,
       sessionTitle,
-      extractText: extractStopFailureText,
+      extractText: extractToolFailureText,
       fallbackTitle: (hookInput, raw) => {
-        const category =
-          typeof hookInput?.error === 'string' ? hookInput.error.trim() : '';
-        return summarizeSessionTitle(category || raw || '请求失败');
+        const toolName =
+          typeof hookInput?.tool_name === 'string'
+            ? hookInput.tool_name.trim()
+            : '';
+        return summarizeSessionTitle(toolName || raw || '工具失败');
       }
     });
 
@@ -43,12 +48,16 @@ runHook(
         buildTextProtocolUrl({
           sty: sessionType,
           sid: sessionId,
-          icon: 'error',
+          icon: 'warn',
           title: failure.title,
           text: failure.text
         }),
         { sessionId }
       );
+
+      await sleep(3000);
+
+      await openAipet(buildTextProtocolUrl({ sid: sessionId }), { sessionId });
     }
   }
 );
